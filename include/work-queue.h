@@ -28,9 +28,9 @@ public:
 
   ~WorkQueue() = default;
 
-  bool empty() const;
+  bool empty();
 
-  int size() const;
+  int size();
 
   /*
    * description: 向队尾推入元素
@@ -49,7 +49,7 @@ public:
 
 template<typename T>
 bool
-WorkQueue<T>::empty() const
+WorkQueue<T>::empty()
 {
   std::unique_lock<std::mutex> lock(mutex_);
 
@@ -58,7 +58,7 @@ WorkQueue<T>::empty() const
 
 template<typename T>
 int
-WorkQueue<T>::size() const
+WorkQueue<T>::size()
 {
   std::unique_lock<std::mutex> lock(mutex_);
 
@@ -78,7 +78,7 @@ bool
 WorkQueue<T>::fetchQueue(T &t)
 {
   std::unique_lock<std::mutex> lock(mutex_);
-  if (work_queue_.empty())return false;
+  if (work_queue_.empty()) return false;
 
   t = std::move(work_queue_.front());
   work_queue_.pop();
