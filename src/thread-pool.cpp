@@ -1,7 +1,7 @@
 /*
  * Author: xQmQ
  * Date: 2021/8/14 12:31
- * Description: 
+ * Description: 线程池的具体实现
  */
 #include "../include/thread-pool.h"
 
@@ -10,7 +10,7 @@ ThreadPool::WorkThread_::operator()()
 {
   std::function<void()> function; // 基础函数类
 
-  bool fetch_queue;
+  bool pop_queue;
 
   // 判断线程池是否关闭
   while (!pool_ptr_->shutdown_) {
@@ -23,9 +23,9 @@ ThreadPool::WorkThread_::operator()()
         pool_ptr_->conditional_lock.wait(lock);
       // 从任务队列取出任务并执行
       // 取出失败则进入下一次循环
-      fetch_queue = pool_ptr_->work_queue_.fetchQueue(function);
+      pop_queue = pool_ptr_->work_queue_.popQueue(function);
     }
-    if (fetch_queue)
+    if (pop_queue)
       function();
   }
 }

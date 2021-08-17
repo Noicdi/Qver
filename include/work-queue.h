@@ -44,7 +44,7 @@ public:
    * param: {t->用以保存被摘出元素}
    * return: {true->摘出元素成功; false->队列为空}
    */
-  bool fetchQueue(T &t);
+  bool popQueue(T &t);
 };
 
 template<typename T>
@@ -75,7 +75,7 @@ WorkQueue<T>::pushQueue(const T &t)
 
 template<typename T>
 bool
-WorkQueue<T>::fetchQueue(T &t)
+WorkQueue<T>::popQueue(T &t)
 {
   std::unique_lock<std::mutex> lock(mutex_);
   if (work_queue_.empty()) return false;
