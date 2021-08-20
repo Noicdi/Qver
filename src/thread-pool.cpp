@@ -30,14 +30,58 @@ ThreadPool::WorkThread_::operator()()
   }
 }
 
-ThreadPool::ThreadPool(int thread_number)
+/*
+ * 在构造函数中泄露 this 指针到其他线程中
+ * 这是否符合线程安全的规范？
+ * 后期考虑是否需要重写
+ * 应当创建一个 create()
+ * 用来注册线程到工作线程队列中
+ * ---
+ * 但是考虑到这个服务器会先初始化
+ * 再插入任务
+ * 暂时这样设定
+ */
+ThreadPool::ThreadPool(const int thread_number)
     : thread_number_(thread_number), shutdown_(false), work_thread_queue_(std::vector<std::thread>(thread_number))
 {
   for (int i = 0; i < thread_number_; ++i)
     work_thread_queue_[i] = std::thread(WorkThread_(i, this));
 }
 
-ThreadPool::~ThreadPool()
+/*
+ * 当外部信号强迫程序结束且任务未结束
+ * 会调用析构函数
+ * 析构函数会唤醒工作线程
+ * 执行未完成的任务
+ * 工作线程需要调用 ThreadPool::conditional_mutex_
+ * 来确保互斥环境
+ * 但是析构函数可能会销毁 ThreadPool::conditional_mutex_
+ * 破坏工作线程的互斥环境
+ * 应当创建一个 shutdown()
+ * 用来结束所有工作线程的任务
+ */
+// ThreadPool::~ThreadPool()
+// {
+//   // 关闭线程池
+//   shutdown_ = true;
+//
+//   // 唤醒所有工作线程
+//   // 工作线程根据 shutdown_ 关闭工作循环
+//   conditional_lock.notify_all();
+//
+//   for (auto &work_thread_ : work_thread_queue_)
+//     if (work_thread_.joinable())
+//       work_thread_.join();
+// }
+
+int
+ThreadPool::size() const
+{
+  return thread_number_;
+}
+
+void
+ThreadPool::shutdown()
 {
   // 关闭线程池
   shutdown_ = true;
@@ -49,10 +93,4 @@ ThreadPool::~ThreadPool()
   for (auto &work_thread_ : work_thread_queue_)
     if (work_thread_.joinable())
       work_thread_.join();
-}
-
-int
-ThreadPool::size() const
-{
-  return thread_number_;
 }

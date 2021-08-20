@@ -46,7 +46,7 @@ public:
    * param: {thread_number->工作线程队列中线程数量}
    * return: {}
    */
-  ThreadPool(const int thread_number);
+  explicit ThreadPool(int thread_number = 5);
 
   ThreadPool(const ThreadPool &) = delete;
 
@@ -56,7 +56,7 @@ public:
 
   ThreadPool &operator=(ThreadPool &&) = delete;
 
-  ~ThreadPool();
+  ~ThreadPool() = default;
 
   /*
    * description: 线程池中工作线程个数
@@ -72,15 +72,23 @@ public:
    */
   template<typename F, typename... Args>
   auto submitWork(F &&f, Args &&...args) -> std::future<decltype(f(args...))>;
+
+  /*
+   * description: 执行完剩下的任务并关闭线程池
+   * param: {}
+   * return: {}
+   */
+  void shutdown();
 };
 
 template<typename F, typename... Args>
 auto
 ThreadPool::submitWork(F &&f, Args &&...args) -> std::future<decltype(f(args...))>
 {
+  // 将传入的函数指针和参数集封装为 std::function
   std::function<decltype(f(args...))()> function = std::bind(std::forward<F>(f), std::forward<Args>(args)...);
 
-  //封装获取任务对象，方便另外一个线程查看结果
+  //封装获取任务对象执行结果(std::future)，方便另外一个线程查看结果
   auto work_ptr = std::make_shared<std::packaged_task<decltype(f(args...))()>>(function);
 
   //利用正则表达式，返回一个函数对象
