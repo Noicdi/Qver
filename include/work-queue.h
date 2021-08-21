@@ -12,11 +12,8 @@
 
 template<typename T>
 class WorkQueue {
-private:
-  std::queue<T> work_queue_; // 任务队列
-  std::mutex mutex_;         // 互斥锁
 public:
-  WorkQueue() = default;
+  explicit WorkQueue() = default;
 
   WorkQueue(const WorkQueue &) = delete;
 
@@ -45,6 +42,10 @@ public:
    * return: {true->摘出元素成功; false->队列为空}
    */
   bool popQueue(T &t);
+
+private:
+  std::queue<T> work_queue_; // 任务队列
+  std::mutex mutex_;         // 互斥锁
 };
 
 template<typename T>

@@ -17,29 +17,6 @@
 #include <vector>
 
 class ThreadPool {
-private:
-  int thread_number_;                           // 当前线程数量
-  bool shutdown_;                               // 线程池是否关闭，true->关闭
-  WorkQueue<std::function<void()>> work_queue_; // 存储读写请求的任务队列
-  std::vector<std::thread> work_thread_queue_;  // 工作线程队列
-  std::mutex conditional_mutex_;                // 线程休眠锁
-  std::condition_variable conditional_lock;     // 线程环境锁
-  class WorkThread_ {                           // 工作线程
-  private:
-    int thread_id_;        // 工作线程编号
-    ThreadPool *pool_ptr_; // 所属线程池
-  public:
-    WorkThread_(int id, ThreadPool *pool_ptr) : thread_id_(id), pool_ptr_(pool_ptr)
-    {}
-
-    /*
-     * description: 重载 ()
-     * param: {}
-     * return: {}
-     */
-    void operator()();
-  };
-
 public:
   /*
    * description: 构造函数，初始化工作线程队列
@@ -74,11 +51,35 @@ public:
   auto submitWork(F &&f, Args &&...args) -> std::future<decltype(f(args...))>;
 
   /*
-   * description: 执行完剩下的任务并关闭线程池
+   * description: 将工作线程中的任务执行完，抛弃任务队列中的任务
    * param: {}
    * return: {}
    */
   void shutdown();
+
+private:
+  int thread_number_;                           // 当前线程数量
+  bool shutdown_;                               // 线程池是否关闭，true->关闭
+  WorkQueue<std::function<void()>> work_queue_; // 存储读写请求的任务队列
+  std::vector<std::thread> work_thread_queue_;  // 工作线程队列
+  std::mutex conditional_mutex_;                // 线程休眠锁
+  std::condition_variable conditional_lock;     // 线程环境锁
+  class WorkThread_ {                           // 工作线程
+  public:
+    explicit WorkThread_(int id, ThreadPool *pool_ptr) : thread_id_(id), pool_ptr_(pool_ptr)
+    {}
+
+    /*
+     * description: 重载 ()
+     * param: {}
+     * return: {}
+     */
+    void operator()();
+
+  private:
+    int thread_id_;        // 工作线程编号
+    ThreadPool *pool_ptr_; // 所属线程池
+  };
 };
 
 template<typename F, typename... Args>
