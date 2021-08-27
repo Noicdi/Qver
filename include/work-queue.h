@@ -7,21 +7,15 @@
 #ifndef QVER_INCLUDE_WORK_QUEUE_H_
 #define QVER_INCLUDE_WORK_QUEUE_H_
 
+#include "../include/non-copyable.h"
+
 #include <mutex>
 #include <queue>
 
 template<typename T>
-class WorkQueue {
+class WorkQueue : NonCopyable {
 public:
   explicit WorkQueue() = default;
-
-  WorkQueue(const WorkQueue &) = delete;
-
-  WorkQueue(WorkQueue &&) = delete;
-
-  WorkQueue &operator=(const WorkQueue &) = delete;
-
-  WorkQueue &operator=(WorkQueue &&) = delete;
 
   ~WorkQueue() = default;
 

@@ -7,7 +7,9 @@
 #ifndef QVER_INCLUDE_THREAD_POOL_H_
 #define QVER_INCLUDE_THREAD_POOL_H_
 
+#include "../include/non-copyable.h"
 #include "../include/work-queue.h"
+
 #include <functional>
 #include <future>
 #include <mutex>
@@ -16,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-class ThreadPool {
+class ThreadPool : NonCopyable {
 public:
   /*
    * description: 构造函数，初始化工作线程队列
@@ -24,14 +26,6 @@ public:
    * return: {}
    */
   explicit ThreadPool(int thread_number = 5);
-
-  ThreadPool(const ThreadPool &) = delete;
-
-  ThreadPool(ThreadPool &&) = delete;
-
-  ThreadPool &operator=(const ThreadPool &) = delete;
-
-  ThreadPool &operator=(ThreadPool &&) = delete;
 
   ~ThreadPool() = default;
 
@@ -56,6 +50,13 @@ public:
    * return: {}
    */
   void shutdown();
+
+  /*
+   * description: 查看线程池是否关闭
+   * param: {}
+   * return: {true->关闭; false->工作}
+   */
+  bool isShutdown() const;
 
 private:
   int thread_number_;                           // 当前线程数量
