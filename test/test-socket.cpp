@@ -4,11 +4,11 @@
  * Description: Socket 类的测试
  */
 
-#include "../include/socket.h"
 #include "../include/epoller.h"
+#include "../include/signaler.h"
+#include "../include/socket.h"
 #include "../include/thread-pool.h"
 #include "../include/timer.h"
-#include "../include/signaler.h"
 
 #include <iostream>
 #include <unistd.h>
@@ -120,6 +120,7 @@ main()
               break;
             }
             case SIGTERM: { // 触发外部关闭程序的信号，关闭线程池
+              std::cout << "触发终止信号" << std::endl;
               pool.shutdown();
               break;
             }
@@ -127,10 +128,7 @@ main()
       epoller.addEvent(signaler.pipe_fd_[0]);
       trigger_signal = false;
     }
-
   }
 
   return 0;
 }
-
-
