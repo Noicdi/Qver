@@ -7,8 +7,8 @@
 #ifndef QVER_INCLUDE_THREAD_POOL_H_
 #define QVER_INCLUDE_THREAD_POOL_H_
 
-#include "../include/non-copyable.h"
-#include "../include/work-queue.h"
+#include "non-copyable.h"
+#include "work-queue.h"
 
 #include <functional>
 #include <future>

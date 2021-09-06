@@ -7,14 +7,14 @@
 #ifndef QVER_INCLUDE_TIMER_H_
 #define QVER_INCLUDE_TIMER_H_
 
-#include "../include/non-copyable.h"
+#include "non-copyable.h"
 
 #include <time.h>
 #include <vector>
 
 class Timer : NonCopyable {
 public:
-  explicit Timer():head_ptr_(nullptr), tail_ptr_(nullptr){}
+  explicit Timer() : head_ptr_(nullptr), tail_ptr_(nullptr) {}
 
   ~Timer();
 
@@ -45,7 +45,7 @@ private:
     explicit UtilTimer(int fd, int timeout = 10);
 
   public:
-    int fd_;                  // 被监控的文件描述符
+    int fd_;                 // 被监控的文件描述符
     time_t expiration_time_; // 超时时间，绝对时间
     UtilTimer *prev_ptr_;    // 前一个计时器
     UtilTimer *next_ptr_;    // 后一个计时器

@@ -7,7 +7,7 @@
 #ifndef QVER_INCLUDE_WORK_QUEUE_H_
 #define QVER_INCLUDE_WORK_QUEUE_H_
 
-#include "../include/non-copyable.h"
+#include "non-copyable.h"
 
 #include <mutex>
 #include <queue>

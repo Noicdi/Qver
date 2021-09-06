@@ -7,13 +7,13 @@
 #ifndef QVER_INCLUDE_SOCKET_H_
 #define QVER_INCLUDE_SOCKET_H_
 
-#include "../include/non-copyable.h"
+#include "non-copyable.h"
 
 #include <arpa/inet.h>
-#include <sys/select.h>
-#include <sys/socket.h>
 #include <assert.h>
 #include <string.h>
+#include <sys/select.h>
+#include <sys/socket.h>
 #include <time.h>
 #include <unistd.h>
 

@@ -24,13 +24,14 @@ Epoller::addEvent(int fd) const
 }
 
 int
-Epoller::delEvent(int fd) const
+Epoller::delEvent(int fd, int is_close) const
 {
   int result = epoll_ctl(epoll_fd_, EPOLL_CTL_DEL, fd, nullptr);
   if (result == -1)
     return -1;
 
-  close(fd);
+  if (is_close)
+    close(fd);
 
   return result;
 }

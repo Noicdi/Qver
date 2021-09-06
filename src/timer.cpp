@@ -88,8 +88,3 @@ Timer::tick(std::vector<int> &timeout_fds)
     }
   }
 }
-
-
-
-
-

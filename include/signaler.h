@@ -7,15 +7,15 @@
 #ifndef QVER_INCLUDE_SIGNALER_H_
 #define QVER_INCLUDE_SIGNALER_H_
 
-#include "../include/non-copyable.h"
-#include "../include/timer.h"
+#include "non-copyable.h"
+#include "timer.h"
 
-#include <sys/socket.h>
-#include <signal.h>
 #include <assert.h>
-#include <unistd.h>
 #include <errno.h>
+#include <signal.h>
 #include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 class Signaler : NonCopyable {
 public:

@@ -7,12 +7,12 @@
 #ifndef QVER_INCLUDE_EPOLLER_H_
 #define QVER_INCLUDE_EPOLLER_H_
 
-#include "../include/non-copyable.h"
+#include "non-copyable.h"
 
-#include <sys/epoll.h>
 #include <assert.h>
-#include <vector>
+#include <sys/epoll.h>
 #include <unistd.h>
+#include <vector>
 
 #define MAX_EVENT_NUMBER 1024
 
@@ -30,11 +30,11 @@ public:
   int addEvent(int fd) const;
 
   /*
-   * description: 向 epoll 内核事件表中删除事件，并 close()
-   * param: {fd->被注册的文件描述符}
-   * return: {0->注册成功; -1->注册失败}
+   * description: 向 epoll 内核事件表中删除事件，并决定是否 close()
+   * param: {fd->被注册的文件描述符; is_close->1表示关闭,0表示不关闭}
+   * return: {0->删除成功; -1->删除失败}
    */
-  int delEvent(int fd) const;
+  int delEvent(int fd, int is_close) const;
 
   /*
    * description: 获取就绪的文件描述符
@@ -45,7 +45,8 @@ public:
 
 private:
   int epoll_fd_; // epoll 文件描述符
-  struct epoll_event events_[MAX_EVENT_NUMBER]{}; // epoll 检测到的事件集
+  struct epoll_event events_[MAX_EVENT_NUMBER] {
+  }; // epoll 检测到的事件集
 };
 
 #endif //QVER_INCLUDE_EPOLLER_H_
