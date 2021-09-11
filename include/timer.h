@@ -14,7 +14,8 @@
 
 class Timer : NonCopyable {
 public:
-  explicit Timer() : head_ptr_(nullptr), tail_ptr_(nullptr) {}
+  explicit Timer() : head_ptr_(nullptr), tail_ptr_(nullptr)
+  {}
 
   ~Timer();
 
@@ -42,7 +43,11 @@ public:
 private:
   class UtilTimer {
   public:
-    explicit UtilTimer(int fd, int timeout = 10);
+    explicit UtilTimer(int fd, int timeout = 10) : fd_(fd),
+                                                   expiration_time_(time(nullptr) + timeout),
+                                                   prev_ptr_(nullptr),
+                                                   next_ptr_(nullptr)
+    {}
 
   public:
     int fd_;                 // 被监控的文件描述符

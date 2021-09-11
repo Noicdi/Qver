@@ -9,6 +9,7 @@
 #include "../include/socket.h"
 #include "../include/thread-pool.h"
 #include "../include/timer.h"
+#include "../include/http-event.h"
 
 #include <iostream>
 #include <unistd.h>
@@ -50,10 +51,17 @@ print(int fd)
   for (int i = 0; i < 3; i++) {
     memset(&buffer, '\0', BUF_SIZE);
     int result = recv(fd, &buffer, BUF_SIZE - 1, 0);
-    std::cout << "接受到" << result << "字节长度的数据" << std::endl;
+    std::cout << fd << "接受到" << result << "字节长度的数据" << std::endl;
     std::cout << buffer << std::endl;
   }
   close(fd);
+}
+
+void
+http(int fd)
+{
+  HttpEvent http_event(fd);
+  http_event.active();
 }
 
 int
@@ -71,7 +79,7 @@ main()
   timeoutHandler();
   bool trigger_signal = false;
 
-  epoller.addEvent(signaler.pipe_fd_[0]);
+  epoller.addEvent(signaler.pipe_fd_[0], true, false, false);
 
   while (!pool.isShutdown()) {
     // 接受客户端连接
@@ -80,14 +88,14 @@ main()
       std::cout << "socket:" << fd << std::endl;
       std::cout << "ip:" << inet_ntoa(client.sin_addr) << std::endl;
       std::cout << "port:" << client.sin_port << std::endl;
-      epoller.addEvent(fd);
+      epoller.addEvent(fd, true, false, true);
       timer.push(fd);
     }
 
     // 获取就绪事件
-    if (epoller.getFds(get_fds, err_fds) != -1) {
+    if (epoller.getFds(&get_fds, nullptr, &err_fds) != -1) {
       // 对就绪可读推入任务队列
-      for (auto get_fd : get_fds) {
+      for (auto get_fd: get_fds) {
         if (get_fd == signaler.pipe_fd_[0]) {
           std::cout << "触发信号" << std::endl;
           trigger_signal = true;
@@ -95,11 +103,10 @@ main()
         }
         std::cout << "推入就绪任务" << get_fd << std::endl;
         timer.pop(get_fd);
-        epoller.delEvent(get_fd, 0);
-        pool.submitWork(&print, get_fd);
+        pool.submitWork(&http, get_fd);
       }
       // 从定时器链表中删除错误文件描述符，例如客户端主动关闭连接
-      for (auto err_fd : err_fds) {
+      for (auto err_fd: err_fds) {
         std::cout << "删除主动关闭" << err_fd << std::endl;
         timer.pop(err_fd);
       }
@@ -114,9 +121,9 @@ main()
           switch (signals[i]) {
             case SIGALRM: { // 触发超时信号，获取超时文件描述符并从内核事件表删除并关闭连接
               timer.tick(timeout_fds);
-              for (auto timeout_fd : timeout_fds) {
+              for (auto timeout_fd: timeout_fds) {
                 std::cout << "删除超时" << timeout_fd << std::endl;
-                epoller.delEvent(timeout_fd, 1);
+                epoller.delEvent(timeout_fd, true);
               }
               timeoutHandler();
               break;
@@ -127,7 +134,7 @@ main()
               break;
             }
           }
-      epoller.addEvent(signaler.pipe_fd_[0]);
+      epoller.addEvent(signaler.pipe_fd_[0], true, false, false);
       trigger_signal = false;
     }
   }

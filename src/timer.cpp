@@ -6,11 +6,6 @@
 
 #include "../include/timer.h"
 
-Timer::UtilTimer::UtilTimer(int fd, int timeout) : fd_(fd), prev_ptr_(nullptr), next_ptr_(nullptr)
-{
-  expiration_time_ = time(nullptr) + timeout;
-}
-
 Timer::~Timer()
 {
   UtilTimer *temp_ptr = head_ptr_;
