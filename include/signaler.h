@@ -1,7 +1,7 @@
 /*
  * Author: xQmQ
  * Date: 2021/8/27 16:07
- * Description: 
+ * Description: 信号处理
  */
 
 #ifndef QVER_INCLUDE_SIGNALER_H_

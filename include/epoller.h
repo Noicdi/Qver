@@ -48,7 +48,8 @@ public:
    * param: {fds->记录就绪的文件描述符集}
    * return: {-1->获取失败; 0->没有就绪文件描述符; >0->共获取的文件描述符数}
    */
-  int getFds(std::vector<int> *in_fds, std::vector<int> *out_fds, std::vector<int> *err_fds);
+  // int getFds(std::vector<int> *in_fds, std::vector<int> *out_fds, std::vector<int> *err_fds);
+  int getFds(epoll_event *events);
 
 private:
   int epoll_fd_; // epoll 文件描述符

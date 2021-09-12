@@ -70,6 +70,7 @@ main()
   Socket socket("127.0.0.1", 12345);
   struct sockaddr_in client;
   Epoller epoller;
+  struct epoll_event events[MAX_EVENT_NUMBER];
   std::vector<int> get_fds, err_fds, timeout_fds;
   ThreadPool pool;
   Timer timer;
@@ -85,30 +86,26 @@ main()
     // 接受客户端连接
     int fd = socket.accept(client);
     if (fd != -1) {
-      std::cout << "socket:" << fd << std::endl;
-      std::cout << "ip:" << inet_ntoa(client.sin_addr) << std::endl;
-      std::cout << "port:" << client.sin_port << std::endl;
       epoller.addEvent(fd, true, false, true);
       timer.push(fd);
     }
 
-    // 获取就绪事件
-    if (epoller.getFds(&get_fds, nullptr, &err_fds) != -1) {
-      // 对就绪可读推入任务队列
-      for (auto get_fd: get_fds) {
-        if (get_fd == signaler.pipe_fd_[0]) {
-          std::cout << "触发信号" << std::endl;
-          trigger_signal = true;
-          continue;
+    int number = epoller.getFds(events);
+    if (number != -1) {
+      for (int i = 0; i < number; ++i) {
+        if (events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
+          epoller.delEvent(events[i].data.fd, true);
+          timer.pop(events[i].data.fd);
+        } else if (events[i].events & EPOLLIN) {
+          if (events[i].data.fd == signaler.pipe_fd_[0]) {
+            trigger_signal = true;
+            continue;
+          }
+          epoller.delEvent(events[i].data.fd, false);
+          timer.pop(events[i].data.fd);
+          int work_fd = events[i].data.fd;
+          pool.submitWork(&http, work_fd);
         }
-        std::cout << "推入就绪任务" << get_fd << std::endl;
-        timer.pop(get_fd);
-        pool.submitWork(&http, get_fd);
-      }
-      // 从定时器链表中删除错误文件描述符，例如客户端主动关闭连接
-      for (auto err_fd: err_fds) {
-        std::cout << "删除主动关闭" << err_fd << std::endl;
-        timer.pop(err_fd);
       }
     }
 
@@ -122,14 +119,12 @@ main()
             case SIGALRM: { // 触发超时信号，获取超时文件描述符并从内核事件表删除并关闭连接
               timer.tick(timeout_fds);
               for (auto timeout_fd: timeout_fds) {
-                std::cout << "删除超时" << timeout_fd << std::endl;
                 epoller.delEvent(timeout_fd, true);
               }
               timeoutHandler();
               break;
             }
             case SIGTERM: { // 触发外部关闭程序的信号，关闭线程池
-              std::cout << "触发终止信号" << std::endl;
               pool.shutdown();
               break;
             }

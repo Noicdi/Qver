@@ -36,19 +36,6 @@ Socket::accept(sockaddr_in &client_address)
   socklen_t client_address_length = sizeof(client_address);
   memset(&client_address, 0, client_address_length);
 
-  // // 通过 select() 实现非阻塞 accept()
-  // fd_set select_fd;
-  // FD_ZERO(&select_fd);
-  // FD_SET(listen_fd_, &select_fd);
-  //
-  // struct timeval timeout;
-  // timeout.tv_sec = 0;
-  // timeout.tv_usec = 0;
-  //
-  // // 如果监听队列中无连接，则返回 -1
-  // if (select(listen_fd_ + 1, &select_fd, nullptr, nullptr, &timeout) <= 0)
-  //   return -1;
-
   int connection_fd = ::accept(listen_fd_, (struct sockaddr *)&client_address, &client_address_length);
 
   return connection_fd;

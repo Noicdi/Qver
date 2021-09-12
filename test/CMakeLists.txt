@@ -11,3 +11,5 @@ set(CMAKE_CXX_FLAGS "-lpthread")
 add_executable(test-thread-pool test-thread-pool.cpp ../src/thread-pool.cpp)
 
 add_executable(test-socket test-socket.cpp ../src/socket.cpp ../src/epoller.cpp ../src/thread-pool.cpp ../src/timer.cpp ../src/signaler.cpp ../src/http-event.cpp)
+
+SET(EXECUTABLE_OUTPUT_PATH /home/z/Qver)

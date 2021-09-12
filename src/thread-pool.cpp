@@ -90,7 +90,7 @@ ThreadPool::shutdown()
   // 工作线程根据 shutdown_ 关闭工作循环
   conditional_lock.notify_all();
 
-  for (auto &work_thread_ : work_thread_queue_)
+  for (auto &work_thread_: work_thread_queue_)
     if (work_thread_.joinable())
       work_thread_.join();
 }

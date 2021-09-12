@@ -17,7 +17,7 @@ const char *error_404_form = "/html/404.html";
 const char *error_500_title = "Internal Error";
 const char *error_500_form = "/html/500.html";
 // 网站根目录，改进版通过配置文件定义
-const char *doc_root = "/home/z/Qver/public";
+char *doc_root = "/home/z/Qver/html";
 
 HttpEvent::HttpEvent(int fd) : fd_(fd)
 {
@@ -179,7 +179,7 @@ HttpEvent::runRead()
 
   // 主状态机，用于从读缓冲区中取出所有完整的行
   while (((check_state_ == CHECK_STATE_CONTENT) && (line_status == LINE_OK))
-         || (line_status = parseLine()) == LINE_OK) {
+      || (line_status = parseLine()) == LINE_OK) {
     text = getLine();             // 获取读缓冲区中的起始行
     start_line_ = checked_index_; // 记录下一行的起始位置
 
