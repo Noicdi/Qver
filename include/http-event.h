@@ -7,8 +7,8 @@
 #ifndef QVER_INCLUDE_HTTP_EVENT_H_
 #define QVER_INCLUDE_HTTP_EVENT_H_
 
-#include "non-copyable.h"
 #include "epoller.h"
+#include "non-copyable.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -171,6 +171,13 @@ private:
   HTTP_CODE doRequest();
 
   /*
+   * description: 查询 real_file_ 是否存在，并映射到内核中
+   * param: {}
+   * return: {}
+   */
+  bool openFile();
+
+  /*
    * description: 对内存映射区接触映射
    * param: {}
    * return: {}
@@ -225,13 +232,6 @@ private:
    * return: {}
    */
   bool addBlankLine();
-
-  /*
-   * description: 应答报文中写入实体主体
-   * param: {}
-   * return: {}
-   */
-  bool addConetnt(const char *content);
 
 private:
   int fd_; // 待处理的客户连接

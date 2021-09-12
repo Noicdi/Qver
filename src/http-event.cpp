@@ -1,70 +1,54 @@
 /*
  * Author: xQmQ
  * Date: 2021/9/6 14:02
- * Description:
+ * Description: HTTP 处理类的实现
  */
 
 #include "../include/http-event.h"
-#include <iostream>
 
 // 定义 HTTP 响应的一些状态信息
 const char *ok_200_title = "OK";
 const char *error_400_title = "Bad Request";
-const char *error_400_form = "Your request has bad syntax or is inherently impossible to satisfy.\n";
+const char *error_400_form = "/html/400.html";
 const char *error_403_title = "Forbidden";
-const char *error_403_form = "You do not have permission to get file from this server.\n";
+const char *error_403_form = "/html/403.html";
 const char *error_404_title = "Not Found";
-const char *error_404_form = "The requested file was not found on this server.\n";
+const char *error_404_form = "/html/404.html";
 const char *error_500_title = "Internal Error";
-const char *error_500_form = "There was an unusual problem serving the requested file.\n";
+const char *error_500_form = "/html/500.html";
 // 网站根目录，改进版通过配置文件定义
-const char *doc_root = "/home/z/Qver/html";
+const char *doc_root = "/home/z/Qver/public";
 
-/*
- * 1. 设置初始化函数，针对接收到的 fd 做状态检查
- *    - 如果处于连接状态，则初始化一系列成员变量，准备处理
- *    - 如果处于非活动状态，则调用结束函数
- *    虽然主线程剔除了异常连接，但是工作线程在接受任务过程中可能关闭
- *
- *  2. run() 调用 runRead() 完成 HTTP 解析
- *  3. run() 调用 runWrite() 完成发送数据
- *
- *  通过监控文件描述符
- *    - 如果读操作就绪，调用 read() 接收请求报文
- *      read() 成功则调用 run()
- *      read() 失败则调用 shutdown()
- *    - 如果写操作就绪，调用 write() 发送应答报文
- *      发送报文成功且是长连接，则监听其读事件
- *      发送报文成功且不是长连接
- *
- *
- */
 HttpEvent::HttpEvent(int fd) : fd_(fd)
 {
-  epoller_.addEvent(fd_, true, false, true);
+  epoller_.addEvent(fd_, true, false, false);
   init();
 }
 
 void
 HttpEvent::active()
 {
-  std::vector<int> in_fd, out_fd, err_fd;
+  struct epoll_event events[MAX_EVENT_NUMBER];
+  int number = 0;
   while (!isShutdown()) {
-    std::vector<int> in_fd, out_fd, err_fd;
-    epoller_.getFds(&in_fd, &out_fd, &err_fd);
-    if (!in_fd.empty()) {
-      if (read()) {
-        run();
-      } else {
-        shutdown();
+    number = epoller_.getFds(events);
+    if (number != -1) {
+      for (int i = 0; i < number; ++i) {
+        if (events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
+          epoller_.delEvent(events[i].data.fd, false);
+          shutdown();
+        }
+        if (events[i].events & EPOLLIN) {
+          if (read())
+            run();
+          else
+            shutdown();
+        }
+        if (events[i].events & EPOLLOUT) {
+          if (!write())
+            shutdown();
+        }
       }
-    } else if (!out_fd.empty()) {
-      if (!write()) {
-        shutdown();
-      }
-    }
-    if (!err_fd.empty()) {
-      is_shutdown_ = true;
     }
   }
 }
@@ -195,10 +179,9 @@ HttpEvent::runRead()
 
   // 主状态机，用于从读缓冲区中取出所有完整的行
   while (((check_state_ == CHECK_STATE_CONTENT) && (line_status == LINE_OK))
-      || (line_status = parseLine()) == LINE_OK) {
+         || (line_status = parseLine()) == LINE_OK) {
     text = getLine();             // 获取读缓冲区中的起始行
     start_line_ = checked_index_; // 记录下一行的起始位置
-    printf("got 1 http line:%s\n", text);
 
     switch (check_state_) {
       case CHECK_STATE_REQUESTLINE: {
@@ -212,10 +195,6 @@ HttpEvent::runRead()
       case CHECK_STATE_HEADER: {
         // 分析头部字段
         result = parseHeaders(text);
-        // if (result == BAD_REQUEST) {
-        //   return BAD_REQUEST;
-        // } else if (result == GET_REQUEST) {
-        //   return doRequest();
         if (result == GET_REQUEST) {
           return doRequest();
         }
@@ -241,65 +220,74 @@ HttpEvent::runRead()
 bool
 HttpEvent::runWrite(HttpEvent::HTTP_CODE result)
 {
+  int length = 0;
+  if (result != FILE_REQUEST) {
+    char *cwd = getcwd(nullptr, 0);
+    if (cwd) {
+      strcpy(real_file_, cwd);
+      length = strlen(real_file_);
+    }
+  }
   switch (result) {
     case INTERNAL_ERROR: {
       addStatusLine(500, error_500_title);
-      addHeaders(strlen(error_400_form));
-      if (!addConetnt(error_500_form)) {
+      strncpy(real_file_ + length, error_500_form, FILE_NAME_LENGTH_ - length - 1);
+      if (openFile()) {
+        addHeaders(file_stat_.st_size);
+      } else {
         return false;
       }
       break;
     }
     case BAD_REQUEST: {
       addStatusLine(400, error_400_title);
-      addHeaders(strlen(error_400_form));
-      if (!addConetnt(error_400_form)) {
+      strncpy(real_file_ + length, error_400_form, FILE_NAME_LENGTH_ - length - 1);
+      if (openFile()) {
+        addHeaders(file_stat_.st_size);
+      } else {
         return false;
       }
       break;
     }
     case NO_RESOURCE: {
       addStatusLine(404, error_404_title);
-      addHeaders(strlen(error_404_form));
-      if (!addConetnt(error_404_form)) {
+      strncpy(real_file_ + length, error_404_form, FILE_NAME_LENGTH_ - length - 1);
+      if (openFile()) {
+        addHeaders(file_stat_.st_size);
+      } else {
         return false;
       }
       break;
     }
     case FORBIDDEN_REQUEST: {
       addStatusLine(403, error_403_title);
-      addHeaders(strlen(error_403_form));
-      if (!addConetnt(error_403_form)) {
+      strncpy(real_file_ + length, error_403_form, FILE_NAME_LENGTH_ - length - 1);
+      if (openFile()) {
+        addHeaders(file_stat_.st_size);
+      } else {
         return false;
       }
       break;
     }
     case FILE_REQUEST: {
       addStatusLine(200, ok_200_title);
-      if (file_stat_.st_size != 0) {
+      if (openFile()) {
         addHeaders(file_stat_.st_size);
-        iovec_[0].iov_base = write_buffer_;
-        iovec_[0].iov_len = write_index_;
-        iovec_[1].iov_base = file_address_;
-        iovec_[1].iov_len = file_stat_.st_size;
-        iovec_count_ = 2;
-        return true;
       } else {
-        const char *ok_string = "<html><body></body></html>";
-        addHeaders(strlen(ok_string));
-        if (!addConetnt(ok_string)) {
-          return false;
-        }
+        return false;
       }
+      break;
     }
     default: {
       return false;
     }
   }
-  // 除状态码 200，其他状态码需要通过 iovec_传递数据
+
   iovec_[0].iov_base = write_buffer_;
   iovec_[0].iov_len = write_index_;
-  iovec_count_ = 1;
+  iovec_[1].iov_base = file_address_;
+  iovec_[1].iov_len = file_stat_.st_size;
+  iovec_count_ = 2;
   return true;
 }
 
@@ -423,8 +411,6 @@ HttpEvent::parseHeaders(char *text)
     text += 5;
     text += strspn(text, " \t");
     host_ = text;
-  } else {
-    printf("oop! unknow header %s\n", text);
   }
   return NO_REQUEST;
 }
@@ -447,21 +433,50 @@ HttpEvent::doRequest()
   int length = strlen(doc_root);
   strncpy(real_file_ + length, url_, FILE_NAME_LENGTH_ - length - 1);
   if (stat(real_file_, &file_stat_) < 0) {
-    return NO_REQUEST;
+    return NO_RESOURCE;
   }
   if (!(file_stat_.st_mode & S_IROTH)) {
     return FORBIDDEN_REQUEST;
   }
   if (S_ISDIR(file_stat_.st_mode)) {
-    return BAD_REQUEST;
+    // url_ 指向一个目录
+    // 首先查看该目录下有无 index.html 文件
+    // 没有则报 400
+    char temp_file[FILE_NAME_LENGTH_];
+    struct stat temp_stat;
+    length = strlen(real_file_);
+    strcpy(temp_file, real_file_);
+    if (temp_file[length - 1] != '/') {
+      strncpy(temp_file + length, "/", FILE_NAME_LENGTH_ - length - 1);
+      ++length;
+    }
+    strncpy(temp_file + length, "index.html", FILE_NAME_LENGTH_ - length - 1);
+    if ((stat(temp_file, &temp_stat) == 0) && (temp_stat.st_mode & S_IROTH)) {
+      // 如果 index.html 文件存在且拥有读取权限，则设置 real_file_ 为 index.html
+      strcpy(real_file_, temp_file);
+      if (stat(real_file_, &file_stat_) < 0) {
+        return NO_REQUEST;
+      }
+    } else {
+      // 否则报 400
+      return BAD_REQUEST;
+    }
   }
+
+  return FILE_REQUEST;
+}
+
+bool
+HttpEvent::openFile()
+{
+  if (stat(real_file_, &file_stat_) < 0)
+    return false;
 
   int fd = open(real_file_, O_RDONLY);
   file_address_ = (char *)mmap(nullptr, file_stat_.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
   close(fd);
 
-
-  return FILE_REQUEST;
+  return true;
 }
 
 void
@@ -532,12 +547,3 @@ HttpEvent::addBlankLine()
 {
   return addResponse("%s", "\r\n");
 }
-
-bool
-HttpEvent::addConetnt(const char *content)
-{
-  return addResponse("%s", content);
-}
-
-
-
