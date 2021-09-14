@@ -5,6 +5,8 @@
 - 使用**非阻塞 socket** + **epoll** + **半同步/半反应堆模式** + **线程池**来处理客户连接
 - 通过**有限状态机**处理 HTTP 请求报文（GET）
 
+![Qver-FlowChart](./docs/images/Qver-FlowChart.png)
+
 ---
 
 ## 运行
@@ -28,9 +30,9 @@ $ cd ..
 $ ./Qver
 ```
 
-![Qver-200](https://xqmq--blog-image.oss-cn-shenzhen.aliyuncs.com/blog-image/Qver-200.png)
+![Qver-200](./docs/images/Qver-200.png)
 
-![Qver-404](https://xqmq--blog-image.oss-cn-shenzhen.aliyuncs.com/blog-image/Qver-404.png)
+![Qver-404](./docs/images/Qver-404.png)
 
 ---
 
