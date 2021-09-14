@@ -38,7 +38,7 @@ timeoutHandler()
 }
 
 void
-http(int fd)
+httpEvent(int fd)
 {
   HttpEvent http_event(fd);
   http_event.active();
@@ -84,7 +84,7 @@ main()
           epoller.delEvent(events[i].data.fd, false);
           timer.pop(events[i].data.fd);
           int work_fd = events[i].data.fd;
-          pool.submitWork(&http, work_fd);
+          pool.submitWork(&httpEvent, work_fd);
         }
       }
     }

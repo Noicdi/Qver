@@ -60,7 +60,7 @@ Timer::pop(int fd)
     delete temp_ptr;
   } else {
     temp_ptr->prev_ptr_->next_ptr_ = temp_ptr->next_ptr_;
-    temp_ptr->prev_ptr_->next_ptr_ = temp_ptr->prev_ptr_;
+    temp_ptr->next_ptr_->prev_ptr_ = temp_ptr->prev_ptr_;
     delete temp_ptr;
   }
   return 0;

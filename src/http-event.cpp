@@ -17,7 +17,7 @@ const char *error_404_form = "/html/404.html";
 const char *error_500_title = "Internal Error";
 const char *error_500_form = "/html/500.html";
 // 网站根目录，改进版通过配置文件定义
-char *doc_root = "/home/z/Qver/html";
+const char *doc_root = "/home/z/Qver/html";
 
 HttpEvent::HttpEvent(int fd) : fd_(fd)
 {
