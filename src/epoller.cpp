@@ -5,8 +5,6 @@
  */
 
 #include "../include/epoller.h"
-#include <errno.h>
-#include <stdio.h>
 
 Epoller::Epoller()
 {
