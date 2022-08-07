@@ -19,8 +19,9 @@ ThreadPool::WorkThread_::operator()()
       std::unique_lock<std::mutex> lock(pool_ptr_->conditional_mutex_);
 
       // 任务队列为空时，阻塞当前工作线程
-      if (pool_ptr_->work_queue_.empty())
-        pool_ptr_->conditional_lock.wait(lock);
+      pool_ptr_->conditional_lock.wait(
+          lock,
+          [this] { return !pool_ptr_->work_queue_.empty(); });
       // 从任务队列取出任务并执行
       // 取出失败则进入下一次循环
       pop_queue = pool_ptr_->work_queue_.popQueue(function);
@@ -90,7 +91,7 @@ ThreadPool::shutdown()
   // 工作线程根据 shutdown_ 关闭工作循环
   conditional_lock.notify_all();
 
-  for (auto &work_thread_: work_thread_queue_)
+  for (auto &work_thread_ : work_thread_queue_)
     if (work_thread_.joinable())
       work_thread_.join();
 }
