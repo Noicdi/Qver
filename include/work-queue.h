@@ -14,7 +14,7 @@
 
 template<typename T>
 class WorkQueue : NonCopyable {
-public:
+ public:
   explicit WorkQueue() = default;
 
   ~WorkQueue() = default;
@@ -37,42 +37,40 @@ public:
    */
   bool popQueue(T &t);
 
-private:
+ private:
   std::queue<T> work_queue_; // 任务队列
   std::mutex mutex_;         // 互斥锁
 };
 
 template<typename T>
-bool
-WorkQueue<T>::empty()
+bool WorkQueue<T>::empty()
 {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
 
   return work_queue_.empty();
 }
 
 template<typename T>
-int
-WorkQueue<T>::size()
+int WorkQueue<T>::size()
 {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
 
   return work_queue_.size();
 }
 
 template<typename T>
-void
-WorkQueue<T>::pushQueue(const T &t)
+void WorkQueue<T>::pushQueue(const T &t)
 {
-  std::unique_lock<std::mutex> lock(mutex_);
-  work_queue_.template emplace(t);
+  std::lock_guard<std::mutex> lock(mutex_);
+
+  work_queue_.emplace(t);
 }
 
 template<typename T>
-bool
-WorkQueue<T>::popQueue(T &t)
+bool WorkQueue<T>::popQueue(T &t)
 {
-  std::unique_lock<std::mutex> lock(mutex_);
+  std::lock_guard<std::mutex> lock(mutex_);
+
   if (work_queue_.empty()) return false;
 
   t = std::move(work_queue_.front());
