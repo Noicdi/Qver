@@ -38,12 +38,8 @@ $ ./Qver
 
 ## 相关文档
 
-- [Qver - 用于练手的服务器程序 | xStack](http://www.xqmq.icu/posts/2be28fe1.html)
-- [I/O多路复用 | xStack](http://www.xqmq.icu/posts/7ce262fd.html)
-- [多进程编程 | xStack](http://www.xqmq.icu/posts/716f0d9b.html)
-- [多线程编程 | xStack](http://www.xqmq.icu/posts/341a9d02.html)
-- [C++11中的多线程 | xStack](http://www.xqmq.icu/posts/c838ae05.html)
-- [C++11中的线程安全 | xStack](http://www.xqmq.icu/posts/6320f5a6.html)
+- [Qver - 用于练手的服务器程序 | xStack](http://www.noicdi.com/posts/2be28fe1.html)
+- [I/O多路复用 | xStack](http://www.noicdi.com/posts/7ce262fd.html)
 
 ---
 
